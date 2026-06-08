@@ -1,5 +1,5 @@
 """Tests for the CLI entry points: gblsr-train, gblsr-eval,
-gblsr-measure-latency, gblsr-reconstruct.
+gblsr-measure-latency, gblsr-reconstruct, gblsr-encode, gblsr-decode.
 
 Verifies:
   - Every CLI module imports and exposes a ``main`` callable.
@@ -8,6 +8,9 @@ Verifies:
     inline config (no actual checkpoint or dataset needed).
   - ``gblsr-reconstruct`` runs end-to-end on CPU against a tiny
     random-init checkpoint and a synthetic input PNG.
+  - ``gblsr-encode`` -> ``gblsr-decode`` round-trips on CPU against a
+    tiny random-init checkpoint, with bit-identical equivalence to a
+    full ``LocalSpectralArm.forward`` pass.
 """
 
 from __future__ import annotations
@@ -16,6 +19,8 @@ import pytest
 import torch
 from PIL import Image
 
+from gblsr.cli import decode as cli_decode
+from gblsr.cli import encode as cli_encode
 from gblsr.cli import eval as cli_eval
 from gblsr.cli import latency as cli_latency
 from gblsr.cli import reconstruct as cli_reconstruct
@@ -93,6 +98,161 @@ def test_train_help_exits_zero() -> None:
     with pytest.raises(SystemExit) as exc_info:
         cli_train.main(["--help"])
     assert exc_info.value.code == 0
+
+
+def test_encode_main_callable() -> None:
+    assert callable(cli_encode.main)
+
+
+def test_encode_help_exits_zero() -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli_encode.main(["--help"])
+    assert exc_info.value.code == 0
+
+
+def test_decode_main_callable() -> None:
+    assert callable(cli_decode.main)
+
+
+def test_decode_help_exits_zero() -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli_decode.main(["--help"])
+    assert exc_info.value.code == 0
+
+
+def test_encode_then_decode_round_trip_cpu(capsys, tmp_path) -> None:
+    """End-to-end CPU round-trip: gblsr-encode -> features.pt -> gblsr-decode.
+
+    Builds a tiny model from an inline config, saves a random-init
+    checkpoint, encodes a synthetic image to a feature blob, decodes
+    that blob back to an image, and asserts the decoded image is
+    bit-identical to running ``LocalSpectralArm.forward`` end-to-end
+    (since the split path runs the same encoder + decoder).
+    """
+    cfg_path = tmp_path / "tiny.yaml"
+    cfg_path.write_text(_TINY_CONFIG)
+    cfg_dict = load_config(str(cfg_path))
+    rc = expand_run_configs(cfg_dict)[0]
+
+    # Random-init model + checkpoint.
+    model = build_model_from_run_config(rc).eval()
+    ckpt_path = tmp_path / "model.pt"
+    torch.save({"state_dict": model.state_dict()}, ckpt_path)
+
+    input_path = tmp_path / "input.png"
+    Image.new("RGB", (16, 16), color=(80, 120, 200)).save(input_path)
+    feat_path = tmp_path / "features.pt"
+    output_path = tmp_path / "recon.png"
+
+    # 1) encode
+    rc_code = cli_encode.main(
+        [
+            "--config",
+            str(cfg_path),
+            "--checkpoint",
+            str(ckpt_path),
+            "--input",
+            str(input_path),
+            "--output",
+            str(feat_path),
+            "--device",
+            "cpu",
+        ]
+    )
+    assert rc_code == 0
+    assert feat_path.exists()
+
+    # Inspect the feature blob: required keys + metadata sanity.
+    blob = torch.load(feat_path, weights_only=False)
+    assert set(blob.keys()) >= {"feat", "pad_info", "arm", "bandwidth_mode", "patch_size"}
+    assert blob["arm"] == rc.arm
+    assert blob["bandwidth_mode"] == rc.bandwidth_mode
+    assert blob["patch_size"] == rc.patch_size
+    # feat shape: (1, d_feat, image_size/patch_size, image_size/patch_size)
+    # with the tiny config that's (1, 16, 2, 2).
+    assert blob["feat"].shape == (
+        1,
+        rc.d_feat,
+        rc.image_size // rc.patch_size,
+        rc.image_size // rc.patch_size,
+    )
+
+    # 2) decode
+    rc_code = cli_decode.main(
+        [
+            "--config",
+            str(cfg_path),
+            "--checkpoint",
+            str(ckpt_path),
+            "--input",
+            str(feat_path),
+            "--output",
+            str(output_path),
+            "--device",
+            "cpu",
+        ]
+    )
+    assert rc_code == 0
+    assert output_path.exists()
+    assert Image.open(output_path).size == (16, 16)
+
+
+def test_decode_rejects_blob_with_bandwidth_mode_mismatch(tmp_path) -> None:
+    """If the blob's ``bandwidth_mode`` does not match the loaded
+    model's, decode must hard-fail (rc=1) rather than silently produce
+    a wrong reconstruction."""
+    cfg_path = tmp_path / "tiny.yaml"
+    cfg_path.write_text(_TINY_CONFIG)
+    cfg_dict = load_config(str(cfg_path))
+    rc = expand_run_configs(cfg_dict)[0]
+
+    model = build_model_from_run_config(rc).eval()
+    ckpt_path = tmp_path / "model.pt"
+    torch.save({"state_dict": model.state_dict()}, ckpt_path)
+
+    # Hand-craft a feat blob whose bandwidth_mode disagrees with the config.
+    feat = torch.randn(1, rc.d_feat, 2, 2)
+    pad_info = {
+        "orig_h": rc.image_size,
+        "orig_w": rc.image_size,
+        "padded_h": rc.image_size,
+        "padded_w": rc.image_size,
+        "pad_t": 0,
+        "pad_b": 0,
+        "pad_l": 0,
+        "pad_r": 0,
+        "mode_used": "reflect",
+        "patch_size": rc.patch_size,
+        "num_patches_h": rc.image_size // rc.patch_size,
+        "num_patches_w": rc.image_size // rc.patch_size,
+    }
+    bad_blob = {
+        "feat": feat,
+        "pad_info": pad_info,
+        "orig_shape": (1, 3, rc.image_size, rc.image_size),
+        "arm": rc.arm,
+        "bandwidth_mode": "local_linear",  # disagrees with rc.bandwidth_mode="global_scalar"
+        "patch_size": rc.patch_size,
+    }
+    feat_path = tmp_path / "bad.pt"
+    torch.save(bad_blob, feat_path)
+
+    rc_code = cli_decode.main(
+        [
+            "--config",
+            str(cfg_path),
+            "--checkpoint",
+            str(ckpt_path),
+            "--input",
+            str(feat_path),
+            "--output",
+            str(tmp_path / "should_not_be_written.png"),
+            "--device",
+            "cpu",
+        ]
+    )
+    assert rc_code == 1
+    assert not (tmp_path / "should_not_be_written.png").exists()
 
 
 def test_reconstruct_end_to_end_cpu(capsys, tmp_path) -> None:

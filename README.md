@@ -71,7 +71,7 @@ CUDA toolkit and a matching `torch` build must be installed separately.
 
 ## Command-line tools
 
-Four console commands are installed by `pip install -e .` / `uv sync`:
+Six console commands are installed by `pip install -e .` / `uv sync`:
 
 | Command                    | Purpose                                                                 |
 |----------------------------|-------------------------------------------------------------------------|
@@ -79,6 +79,8 @@ Four console commands are installed by `pip install -e .` / `uv sync`:
 | `gblsr-eval`               | Evaluate a saved checkpoint on the val split; prints aggregate as JSON.|
 | `gblsr-measure-latency`    | Measure per-image inference latency under the fixed GPU latency protocol. |
 | `gblsr-reconstruct`        | Run a trained checkpoint on one image and write the reconstruction.    |
+| `gblsr-encode`             | Encode an image to a compact feature tensor (encoder-only forward).    |
+| `gblsr-decode`             | Decode a feature tensor back to an image (decoder-only forward).       |
 
 Usage:
 
@@ -90,12 +92,35 @@ uv run gblsr-reconstruct \
     --config configs/example.yaml \
     --checkpoint <path/to/model.pt> \
     --input image.png --output recon.png
+uv run gblsr-encode \
+    --config configs/example.yaml \
+    --checkpoint <path/to/model.pt> \
+    --input image.png --output features.pt
+uv run gblsr-decode \
+    --config configs/example.yaml \
+    --checkpoint <path/to/model.pt> \
+    --input features.pt --output recon.png
 ```
 
 Each command is also reachable as a module (``python -m gblsr.cli.train
-| eval | latency | reconstruct``) and via the repo-root shim scripts
-(`scripts/train.py`, `scripts/eval.py`, `scripts/measure_latency.py`,
-`scripts/reconstruct.py`).
+| eval | latency | reconstruct | encode | decode``) and via the repo-root
+shim scripts (`scripts/train.py`, `scripts/eval.py`, `scripts/measure_latency.py`,
+`scripts/reconstruct.py`, `scripts/encode.py`, `scripts/decode.py`).
+
+### Splitting the forward pass across machines
+
+`gblsr-encode` + `gblsr-decode` together let you split a GB-LSR
+forward pass across machines: encode on machine A, transfer the
+(much smaller) feature blob over the network, decode on machine B.
+The encoder output for the default config is ~24x smaller than the
+raw input image, and the decode side reconstructs bit-identically
+to a single-machine ``LocalSpectralArm.forward`` pass on the same
+checkpoint. Both ends must use the same trained checkpoint; the
+feature blob carries metadata (arm, bandwidth_mode, patch_size) and
+the decode side hard-fails on any mismatch. Only the local-spectral
+arm is supported (the Global Fourier-MLP baseline arm uses a
+shape-locked global-pool decoder that is not amenable to per-patch
+feature transfer).
 
 ## Using gblsr from Python
 

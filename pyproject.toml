@@ -46,6 +46,8 @@ gblsr-train = "gblsr.cli.train:main"
 gblsr-eval = "gblsr.cli.eval:main"
 gblsr-measure-latency = "gblsr.cli.latency:main"
 gblsr-reconstruct = "gblsr.cli.reconstruct:main"
+gblsr-encode = "gblsr.cli.encode:main"
+gblsr-decode = "gblsr.cli.decode:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

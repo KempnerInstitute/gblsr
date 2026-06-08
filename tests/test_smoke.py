@@ -13,7 +13,7 @@ def test_version():
 
 
 def test_subpackages_import():
-    from gblsr.cli import eval, latency, reconstruct, train  # noqa: F401
+    from gblsr.cli import decode, encode, eval, latency, reconstruct, train  # noqa: F401
     from gblsr.data import loaders  # noqa: F401
     from gblsr.encoders import rdn  # noqa: F401
     from gblsr.latency import protocol  # noqa: F401
