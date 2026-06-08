@@ -81,7 +81,12 @@ def _load_state_dict(checkpoint_path: str, device: torch.device) -> dict:
     Accepts both the trainer's dict format (with ``state_dict`` key)
     and a bare state_dict.
     """
-    obj = torch.load(checkpoint_path, map_location=device)
+    # weights_only=False: the trainer saves a metadata dict alongside
+    # the state_dict (arm, seed, experiment_id, git_commit, config),
+    # which is not loadable under torch.load's safe-loading restriction.
+    # Caller-supplied checkpoints are assumed to come from a trusted
+    # trainer; do not pass arbitrary remote files to this loader.
+    obj = torch.load(checkpoint_path, map_location=device, weights_only=False)
     if isinstance(obj, dict) and "state_dict" in obj and isinstance(obj["state_dict"], dict):
         return obj["state_dict"]
     if isinstance(obj, dict):
