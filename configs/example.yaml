@@ -1,0 +1,90 @@
+# Example training config for `uv run gblsr-train --config configs/example.yaml`.
+#
+# Trains the main GB-LSR variant (one global trainable scalar bandwidth)
+# for 200 steps on DTD + DIV2K at 256x256, then evaluates on the
+# held-out split with the standard metric panel (PSNR / SSIM / LPIPS /
+# edge-LPIPS / local-spectrum error).
+#
+# Before running, set `base.data.dtd_root` and `base.data.div2k_root`
+# to where you keep those datasets locally. Canonical sources are
+# linked in the README.
+#
+# YAML schema (see `expand_run_configs` in gblsr.training.trainer):
+#   experiment_id : string identifier for this run group
+#   run_root      : directory under which per-arm/per-seed subdirs are written
+#   base          : fields shared by every (arm, seed) combination
+#   arms          : per-arm entries; each carries an `arm` name and any
+#                   per-arm overrides plus an optional `slug` used to
+#                   form the run-dir name
+#   seeds         : list of seeds; one full run per (arm, seed) cell
+
+experiment_id: gblsr_example
+run_root: runs/example
+
+base:
+  # ---- training schedule ----
+  total_steps: 200
+  batch_size: 8
+  lr: 2.0e-4
+  log_every: 20
+  num_val_images: 32
+  num_val_curve_images: 32
+
+  # ---- image / patch geometry ----
+  image_size: 256
+  patch_size: 32
+
+  # ---- encoder ----
+  d_feat: 128
+  n_encoder_layers: 3
+
+  # ---- spectral basis ----
+  family: fourier
+  p_max: 16
+  s_e_lo: 0.25
+  s_e_hi: 2.0
+  p_soft_lo: 1.0
+  p_soft_hi: 16.0
+
+  # ---- decoder (Global Fourier-MLP baseline only; the local-spectral
+  #      decoder ignores these) ----
+  decoder_hidden: 256
+  decoder_layers: 3
+  n_global_freq: 128
+
+  # ---- loss ----
+  loss_name: mse        # one of: mse / l1 / charbonnier
+  lambda_point: 1.0
+
+  # ---- data loader ----
+  data:
+    dtd_root: /path/to/dtd            # <-- set to your DTD root
+    div2k_root: /path/to/DIV2K        # <-- set to your DIV2K root
+    image_size: 256
+    patch_size: 32
+    num_workers: 4
+    # Optional: cap dataset size for faster iteration.
+    # dtd_max_images: 200
+    # div2k_max_images: 100
+
+arms:
+  # Main GB-LSR variant: one global trainable scalar bandwidth shared
+  # across every patch (and every image).
+  - arm: local_spectral
+    slug: gb_lsr_scalar
+    bandwidth_mode: global_scalar
+
+  # To add more variants, append more stanzas. Examples (commented):
+  #
+  # - arm: local_spectral
+  #   slug: gb_lsr_full
+  #   bandwidth_mode: local_logspace
+  #
+  # - arm: local_spectral
+  #   slug: gb_lsr_fixed
+  #   bandwidth_mode: fixed_midpoint
+  #
+  # - arm: global_fourier_mlp
+  #   slug: gfm_baseline
+
+seeds: [0]

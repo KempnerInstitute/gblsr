@@ -1,0 +1,32 @@
+# Pre-commit hooks for gblsr.
+#
+# Install once after cloning::
+#
+#     pip install pre-commit
+#     pre-commit install
+#
+# Then every ``git commit`` runs ruff check + ruff format on the
+# staged files. The same checks run in CI (``.github/workflows/ci.yml``);
+# this hook is for catching issues locally before they reach CI.
+#
+# To bump the ruff version pinned below to the latest release::
+#
+#     pre-commit autoupdate
+#
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=1024]

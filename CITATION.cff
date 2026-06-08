@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use GB-LSR in your research, please cite it as below."
+title: "gblsr: Python implementation of GB-LSR (Global-Bandwidth Local Spectral Representation) for continuous image reconstruction"
+authors:
+  - family-names: Shad
+    given-names: Max
+    email: max_shad@harvard.edu
+    affiliation: "Kempner Institute for the Study of Natural and Artificial Intelligence at Harvard University"
+  - family-names: Khoshnevis
+    given-names: Naeem
+    email: naeem_khoshnevis@harvard.edu
+    affiliation: "Kempner Institute for the Study of Natural and Artificial Intelligence at Harvard University"
+version: "0.0.0"
+date-released: "2026-06-08"
+url: "https://github.com/KempnerInstitute/gblsr"
+repository-code: "https://github.com/KempnerInstitute/gblsr"
+license: BSD-3-Clause
+type: software
+keywords:
+  - image-reconstruction
+  - super-resolution
+  - arbitrary-scale-super-resolution
+  - continuous-image-representation
+  - local-spectral-representation
+  - patch-fourier
+  - pytorch
+preferred-citation:
+  type: article
+  title: "GB-LSR: A Fast Local-Spectral Image Representation with a Single Global Bandwidth for Continuous Reconstruction and Super-Resolution"
+  authors:
+    - family-names: Shad
+      given-names: Max
+    - family-names: Khoshnevis
+      given-names: Naeem
+  journal: "arXiv preprint arXiv:XXX"
+  year: 2026

@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gblsr"
+version = "0.0.0"
+description = "GB-LSR: Global-Bandwidth Local Spectral Representation for continuous image reconstruction."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Harvard Office of Technology Development", email = "otd@harvard.edu" },
+]
+license = { text = "BSD-3-Clause" }
+classifiers = [
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.26",
+    "torch>=2.1",
+    "torchvision>=0.16",
+    "pillow>=10.0",
+    "lpips>=0.1.4",
+    "matplotlib>=3.8",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/KempnerInstitute/gblsr"
+"Source"   = "https://github.com/KempnerInstitute/gblsr"
+
+[project.scripts]
+gblsr-train = "gblsr.cli.train:main"
+gblsr-eval = "gblsr.cli.eval:main"
+gblsr-measure-latency = "gblsr.cli.latency:main"
+gblsr-reconstruct = "gblsr.cli.reconstruct:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["gblsr*"]
+
+[tool.setuptools.package-data]
+gblsr = ["py.typed"]
+
+# Pin the local dev environment (uv) to PyTorch's cu121 wheel index so
+# `uv sync` resolves CUDA-12-compatible torch/torchvision. End users
+# installing via plain `pip install` pick up whatever PyPI default
+# matches their setup; the [project] dependencies above stay
+# permissive so pip-installed wheels are not constrained.
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

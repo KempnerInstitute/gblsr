@@ -1,0 +1,49 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Tests / caches
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Checkpoints + training-run outputs
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.npz
+*.tfevents.*
+tensorboard/
+
+# Local scratch / heavy artifacts not tracked in the repo
+/runs/
+/artifacts/
+/data/
+tmp/
