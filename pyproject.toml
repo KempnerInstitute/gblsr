@@ -9,7 +9,7 @@ description = "GB-LSR: Global-Bandwidth Local Spectral Representation for contin
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "Harvard Office of Technology Development", email = "otd@harvard.edu" },
+    { name = "Max Shad", email = "max_shad@harvard.edu" },
 ]
 license = { text = "BSD-3-Clause" }
 classifiers = [
