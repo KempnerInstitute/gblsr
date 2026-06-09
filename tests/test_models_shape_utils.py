@@ -133,7 +133,7 @@ def test_make_valid_patch_mask_excludes_fully_padded_patches() -> None:
 
 def test_make_valid_patch_mask_with_batch_dim() -> None:
     """When ``batch_size`` is provided, the mask gets a leading batch
-    axis (broadcast — same mask per batch element since the pad is
+    axis (broadcast: same mask per batch element since the pad is
     shared across the batch)."""
     info = {
         "orig_h": 32,
