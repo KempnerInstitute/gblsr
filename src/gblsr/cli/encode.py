@@ -1,30 +1,10 @@
 """CLI: encode an image to a GB-LSR feature tensor.
 
-Use case: split the GB-LSR forward pass across machines. Encode on
-machine A, transfer the (much smaller) feature file, decode on machine
-B via ``gblsr-decode``. With the default GB-LSR config
-(``patch_size=32``, ``d_feat=128``), the feature tensor is roughly
-24x smaller than the raw uint8 input image.
-
-Both ends must use the same model architecture and the same trained
-checkpoint; the feature space is model-specific. The decode side
-performs sanity checks on the blob's ``arm`` / ``bandwidth_mode`` /
-``patch_size`` to catch checkpoint mismatches early.
-
-Only the local-spectral arm (``arm: local_spectral``) is supported.
-The Global Fourier-MLP baseline arm uses a shape-locked global-pool
-decoder and is not amenable to per-patch feature transfer.
-
-Output file format (torch.save dict)::
-
-    {
-        "feat":           (B, D, nH, nW) tensor on CPU,
-        "pad_info":       dict (orig_h/w, padded_h/w, pad_t/b/l/r, ...),
-        "orig_shape":     tuple of the input shape (B, C, H, W),
-        "arm":            arm name from the RunConfig,
-        "bandwidth_mode": bandwidth mode (sanity check on decode),
-        "patch_size":     patch_size (sanity check on decode),
-    }
+Paired with ``gblsr-decode`` to split the forward pass across
+machines: encode on machine A, transfer the feature blob, decode on
+machine B. The feature tensor is ~24x smaller than the raw input
+image with the default config. Only ``arm="local_spectral"`` is
+supported.
 
 Usage::
 
@@ -117,7 +97,7 @@ def main(argv: list[str] | None = None) -> int:
     if rc.arm != "local_spectral":
         print(
             f"ERROR: gblsr-encode supports only arm='local_spectral'; got arm={rc.arm!r}. "
-            "The Global Fourier-MLP baseline arm uses a shape-locked global-pool decoder "
+            "``BaselineArm`` (Global Fourier-MLP) uses a shape-locked global-pool decoder "
             "and is not amenable to per-patch feature transfer.",
             file=sys.stderr,
         )

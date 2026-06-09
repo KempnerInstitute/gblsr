@@ -1,15 +1,8 @@
 """CLI: decode a GB-LSR feature tensor back to an image.
 
-Paired with ``gblsr-encode``. The feature blob written by
-``gblsr-encode`` carries everything the decoder needs: the
-``(B, D, nH, nW)`` feature tensor, the ``pad_info`` from the encoder's
-reflect-pad step (so the decoded image can be cropped back to its
-original spatial size), and sanity-check metadata
-(``arm`` / ``bandwidth_mode`` / ``patch_size``). The decoder side
-hard-fails on metadata mismatch so a misrouted blob does not silently
-produce garbage.
-
-Only the local-spectral arm (``arm: local_spectral``) is supported.
+Paired with ``gblsr-encode``. Decode hard-fails on arm /
+bandwidth_mode / patch_size mismatch between the blob and the loaded
+checkpoint. Only ``arm="local_spectral"`` is supported.
 
 Usage::
 

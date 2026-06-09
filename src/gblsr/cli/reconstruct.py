@@ -4,12 +4,12 @@ Loads the model architecture from a YAML config, restores weights
 from a checkpoint, runs a single forward pass on the input image,
 and writes the reconstruction to the output path.
 
-The local-spectral arm (the main GB-LSR variant) handles inputs of
+``LocalSpectralArm`` (the main GB-LSR variant) handles inputs of
 arbitrary spatial size: ``LocalSpectralArm.forward`` reflect-pads to
 the nearest multiple of ``patch_size`` and crops the reconstruction
-back to the input's original size. The Global Fourier-MLP baseline
-arm is shape-locked to the configured ``image_size`` and will raise
-on non-matching inputs.
+back to the input's original size. ``BaselineArm`` (Global
+Fourier-MLP) is shape-locked to the configured ``image_size`` and
+will raise on non-matching inputs.
 
 Usage::
 

@@ -227,7 +227,7 @@ class LocalSpectralDecoder(nn.Module):
 
 
 class BaselineArm(nn.Module):
-    """Global-Fourier-MLP baseline arm (no-local-basis control variant).
+    """Global Fourier-MLP baseline (no-local-basis control variant).
 
     The encoder pools to a global feature vector; a coordinate
     Fourier-MLP then renders an ``image_size``-sized reconstruction

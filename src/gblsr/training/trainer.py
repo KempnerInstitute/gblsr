@@ -344,7 +344,7 @@ def dump_locality_artifacts(
         image_names:   <U128   [N]
         image_paths:   <U512   [N]
 
-    Baseline arm (no s_e / p_soft) writes an empty-arrays npz with the same keys so
+    ``BaselineArm`` (no s_e / p_soft) writes an empty-arrays npz with the same keys so
     downstream code can check `s_e.size > 0`.
     """
     model.eval()
@@ -413,7 +413,7 @@ def dump_locality_artifacts(
             flush=True,
         )
         return summary
-    # Baseline arm: empty locality (caller can check has_adaptivity=False).
+    # BaselineArm: empty locality (caller can check has_adaptivity=False).
     np.savez_compressed(
         out_path,
         s_e=np.zeros((0, 0, 0), dtype=np.float32),
