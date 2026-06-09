@@ -23,7 +23,6 @@ gblsr/                           repo root
 ├── README.md                    (this file)
 ├── LICENSE                      BSD 3-Clause
 ├── CITATION.cff                 GitHub-readable citation metadata
-├── python-pkg-plan.md           package design / layout notes
 ├── src/gblsr/                   Python package
 │   ├── models/                  Basis, encoder, local-spectral decoder
 │   ├── encoders/                Heavyweight image encoders (e.g. RDN)
@@ -102,10 +101,7 @@ uv run gblsr-decode \
     --input features.pt --output recon.png
 ```
 
-Each command is also reachable as a module (``python -m gblsr.cli.train
-| eval | latency | reconstruct | encode | decode``) and via the repo-root
-shim scripts (`scripts/train.py`, `scripts/eval.py`, `scripts/measure_latency.py`,
-`scripts/reconstruct.py`, `scripts/encode.py`, `scripts/decode.py`).
+Also reachable as `python -m gblsr.cli.<name>` or `scripts/<name>.py`.
 
 ## Using gblsr from Python
 
