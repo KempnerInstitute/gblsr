@@ -188,13 +188,13 @@ run). Canonical sources:
 ## Production speedup
 
 Defaults are deployment-conservative (batch=1, no AMP, no
-`torch.compile`, no CUDA Graphs); `gblsr-measure-latency` reproduces
-the paper protocol. For production, layer these on top of
-`LocalSpectralArm`, in measured impact order on H200:
+`torch.compile`, no CUDA Graphs); `gblsr-measure-latency` uses the
+same defaults. For production, layer these on top of
+`LocalSpectralArm`:
 
 - **`torch.compile`** (`model = torch.compile(model)`): ~2.4x at
-  256x256 (1.43 ms -> 0.58 ms). One-time ~60 s compile per input
-  shape.
+  256x256 (1.43 ms -> 0.58 ms on NVIDIA H200 SXM 141GB). One-time
+  ~60 s compile per input shape.
 - **Batching**: pass `(B, 3, H, W)`; per-image cost amortizes.
 - **CUDA Graphs**: capture + replay at a fixed input shape.
 - **AMP** (bf16/fp16): use only inside a larger AMP pipeline.
