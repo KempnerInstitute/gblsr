@@ -107,21 +107,6 @@ Each command is also reachable as a module (``python -m gblsr.cli.train
 shim scripts (`scripts/train.py`, `scripts/eval.py`, `scripts/measure_latency.py`,
 `scripts/reconstruct.py`, `scripts/encode.py`, `scripts/decode.py`).
 
-### Splitting the forward pass across machines
-
-`gblsr-encode` + `gblsr-decode` together let you split a GB-LSR
-forward pass across machines: encode on machine A, transfer the
-(much smaller) feature blob over the network, decode on machine B.
-The encoder output for the default config is ~24x smaller than the
-raw input image, and the decode side reconstructs bit-identically
-to a single-machine ``LocalSpectralArm.forward`` pass on the same
-checkpoint. Both ends must use the same trained checkpoint; the
-feature blob carries metadata (arm, bandwidth_mode, patch_size) and
-the decode side hard-fails on any mismatch. Only the local-spectral
-arm is supported (the Global Fourier-MLP baseline arm uses a
-shape-locked global-pool decoder that is not amenable to per-patch
-feature transfer).
-
 ## Using gblsr from Python
 
 The most-used entry points are re-exported at the package top level:
@@ -152,7 +137,7 @@ public symbols; the deep-import paths (e.g.
 ``gblsr.models.arms.LocalSpectralArm``) continue to work for power
 users.
 
-### Minimal end-to-end example
+### Quick API check
 
 ```python
 import torch
@@ -183,40 +168,22 @@ print(f"median latency: {result.median_ms:.2f} ms")
 
 ## Production speedup
 
-The shipped configuration matches a deployment-conservative inference
-setup: batch size 1, no AMP, no `torch.compile`, no CUDA Graphs.
-This makes `gblsr-measure-latency` an honest reflection of
-"ordinary PyTorch eager-mode inference at single-image batch" — the
-worst-case latency a naive deployment would see.
+Defaults are deployment-conservative (batch=1, no AMP, no
+`torch.compile`, no CUDA Graphs); `gblsr-measure-latency` reproduces
+the paper protocol. For production, layer these on top of
+`LocalSpectralArm`, in measured impact order on H200:
 
-For production use, in order of empirically observed impact on
-``LocalSpectralArm`` (single H200, batch=1, ``global_scalar``
-bandwidth mode, 256x256 input):
+- **`torch.compile`** (`model = torch.compile(model)`): ~2.4x at
+  256x256 (1.43 ms -> 0.58 ms). One-time ~60 s compile per input
+  shape.
+- **Batching**: pass `(B, 3, H, W)`; per-image cost amortizes.
+- **CUDA Graphs**: capture + replay at a fixed input shape.
+- **AMP** (bf16/fp16): *not recommended for this model* — measured
+  0.79–0.95x of fp32 (autocast overhead exceeds kernel savings for a
+  ~1 M-param model). Use only inside a larger AMP pipeline.
 
-- **`torch.compile`**: ``model = torch.compile(model)``. The
-  largest single-knob speedup — measured **2.44x** at 256x256 on
-  H200 (1.43 ms -> 0.58 ms). One-time compile cost is ~60 s and
-  is per-shape; recompilation is triggered by input-shape changes.
-- **Batching**: replace ``(1, 3, H, W)`` input with ``(B, 3, H, W)``
-  for larger ``B``. Decoder cost shifts from per-image overhead to
-  per-pixel multiply-adds, which amortize well.
-- **CUDA Graphs**: capture the forward pass once at a fixed input
-  shape and replay it on subsequent inputs. Useful for repeated
-  identical-shape inference.
-- **AMP** (``torch.amp.autocast`` bf16 or fp16): **not recommended
-  for this model.** The model is small enough (~1 M parameters,
-  per-patch projections of size 32x16x16) that autocast overhead
-  (dtype casts in/out of the autocast region, weight casts) exceeds
-  the half-precision kernel savings. Empirically AMP bf16 measures
-  0.79-0.95x of fp32 (i.e. slower) at every input size tested
-  (64, 256, 512, 1024). Stacking ``torch.compile`` + bf16 also does
-  not beat ``torch.compile`` alone. Recommended only if you are
-  stacking the model into a larger pipeline that already runs under
-  AMP.
-
-These knobs are independent and can be combined; for this model,
-``torch.compile`` alone delivers essentially all of the available
-speedup.
+`torch.compile` alone delivers essentially all the available speedup;
+stacking with bf16 does not beat it.
 
 ## Variants
 
@@ -258,25 +225,7 @@ If you use GB-LSR in your work, please cite:
 
 *(Replace ``XXX`` with the actual arXiv identifier once assigned.)*
 
-The same citation metadata is also provided in machine-readable
-form in [CITATION.cff](CITATION.cff) (Citation File Format 1.2.0),
-which GitHub renders as a "Cite this repository" widget in the
-sidebar and which tools like Zotero / arXiv2BibTeX consume directly.
-
 ## License
 
 BSD 3-Clause. Copyright (c) 2026, President and Fellows of Harvard
 College. See [LICENSE](LICENSE) for the full text.
-
-## Patent notice
-
-The methods implemented in this software are the subject of one or
-more pending patent applications owned and controlled by the
-President and Fellows of Harvard College (the "Patent Rights"). The
-BSD 3-Clause license above grants rights to the copyrighted source
-code only; it does not grant, by implication, estoppel, or
-otherwise, any license under the Patent Rights.
-
-For patent licensing inquiries, including any commercial use that
-requires rights under the Patent Rights, contact the Harvard Office
-of Technology Development (OTD) at `otd@harvard.edu`.
