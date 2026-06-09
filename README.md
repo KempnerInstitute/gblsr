@@ -162,20 +162,6 @@ result = measure_latency(model, x, track_peak_memory=False)
 print(f"median latency: {result.median_ms:.2f} ms")
 ```
 
-## Production speedup
-
-Defaults are deployment-conservative (batch=1, no AMP, no
-`torch.compile`, no CUDA Graphs); `gblsr-measure-latency` reproduces
-the paper protocol. For production, layer these on top of
-`LocalSpectralArm`, in measured impact order on H200:
-
-- **`torch.compile`** (`model = torch.compile(model)`): ~2.4x at
-  256x256 (1.43 ms -> 0.58 ms). One-time ~60 s compile per input
-  shape.
-- **Batching**: pass `(B, 3, H, W)`; per-image cost amortizes.
-- **CUDA Graphs**: capture + replay at a fixed input shape.
-- **AMP** (bf16/fp16): use only inside a larger AMP pipeline.
-
 ## Variants
 
 The GB-LSR family is parameterized by ``bandwidth_mode`` in
@@ -198,6 +184,20 @@ run). Canonical sources:
 - Kodak: <https://r0k.us/graphics/kodak/>
 - Set14 / Set5 / Urban100: <https://github.com/jbhuang0604/SelfExSR>
 - BSDS500 / B100: <https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/segbench/>
+
+## Production speedup
+
+Defaults are deployment-conservative (batch=1, no AMP, no
+`torch.compile`, no CUDA Graphs); `gblsr-measure-latency` reproduces
+the paper protocol. For production, layer these on top of
+`LocalSpectralArm`, in measured impact order on H200:
+
+- **`torch.compile`** (`model = torch.compile(model)`): ~2.4x at
+  256x256 (1.43 ms -> 0.58 ms). One-time ~60 s compile per input
+  shape.
+- **Batching**: pass `(B, 3, H, W)`; per-image cost amortizes.
+- **CUDA Graphs**: capture + replay at a fixed input shape.
+- **AMP** (bf16/fp16): use only inside a larger AMP pipeline.
 
 ## Citation
 
