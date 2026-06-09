@@ -36,7 +36,6 @@ from .shape_utils import pad_to_multiple, crop_to_original, make_valid_patch_mas
 @dataclass
 class EncoderConfig:
     d_feat: int = 128
-    n_layers: int = 3
     groupnorm: int = 8
 
 

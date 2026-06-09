@@ -36,7 +36,7 @@ def _tiny_model_config(arm: str) -> ModelConfig:
         image_size=16,
         patch_size=8,
         basis=BasisConfig(patch_size=8, p_max=4),
-        encoder=EncoderConfig(d_feat=8, n_layers=1),
+        encoder=EncoderConfig(d_feat=8),
         n_global_freq=16,
         decoder_hidden=16,
         decoder_layers=2,
@@ -111,7 +111,7 @@ def test_build_model_raises_on_unknown_arm() -> None:
 def test_encoder_forward_preserves_patch_grid_resolution() -> None:
     """``Encoder`` downsamples by exactly ``patch_size`` (it has
     ``log2(patch_size)`` stride-2 blocks)."""
-    cfg = EncoderConfig(d_feat=8, n_layers=1)
+    cfg = EncoderConfig(d_feat=8)
     enc = Encoder(image_size=32, patch_size=8, cfg=cfg).eval()
     x = torch.randn(1, 3, 32, 32)
     with torch.no_grad():

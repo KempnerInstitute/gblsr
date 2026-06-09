@@ -37,7 +37,6 @@ base:
   image_size: 16
   patch_size: 8
   d_feat: 16
-  n_encoder_layers: 1
   p_max: 4
   s_e_lo: 0.25
   s_e_hi: 2.0

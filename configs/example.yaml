@@ -36,7 +36,6 @@ base:
 
   # ---- encoder ----
   d_feat: 128
-  n_encoder_layers: 3
 
   # ---- spectral basis ----
   family: fourier

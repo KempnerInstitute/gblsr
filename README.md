@@ -146,7 +146,7 @@ mc = ModelConfig(
     image_size=256,
     patch_size=32,
     basis=BasisConfig(patch_size=32, p_max=16),
-    encoder=EncoderConfig(d_feat=128, n_layers=3),
+    encoder=EncoderConfig(d_feat=128),
 )
 model = LocalSpectralArm(mc, bandwidth_mode="global_scalar").eval()
 

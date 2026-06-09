@@ -53,10 +53,8 @@ class DataConfig:
         ``image_size`` is ``None`` AND/OR ``resize_policy == "original"``.
         ``__getitem__`` returns ``[3, H, W]`` at the *original* image
         resolution (rectangular OK; tiny images are NOT silently
-        upsampled). ``pad_policy="model_forward"`` indicates that the
-        model handles padding internally (see ``LocalSpectralArm``).
-        Variable-resolution batches do not stack; ``batch_size > 1``
-        raises ``NotImplementedError``.
+        upsampled). Variable-resolution batches do not stack;
+        ``batch_size > 1`` raises ``NotImplementedError``.
     """
 
     dtd_root: str
@@ -69,10 +67,8 @@ class DataConfig:
     div2k_max_images: int | None = None
     val_fraction: float = 0.1
     num_workers: int = 4
-    cache_dir: str | None = None
     seed: int = 0
     resize_policy: str = "center_crop_or_upsample_to_size"
-    pad_policy: str = "model_forward"
 
 
 def _center_or_random_crop(img: Image.Image, size: int, rng: torch.Generator | None) -> Image.Image:
@@ -253,38 +249,6 @@ class PatchCropDataset(Dataset):
             "path": path,
         }
         return t, name, path, meta
-
-
-class _SyntheticVarresDataset(Dataset):
-    """Synthetic stand-in dataset for variable-res smokes when no images are on disk.
-
-    Yields a deterministic random image at one of the requested ``shapes``.
-    Used by tests / smokes that don't want to bind to filesystem state.
-    """
-
-    def __init__(
-        self, shapes: Sequence[tuple[int, int]], dataset_name: str = "synthetic", seed: int = 0
-    ):
-        self.shapes = list(shapes)
-        self.dataset_name = dataset_name
-        self.seed = seed
-
-    def __len__(self):
-        return len(self.shapes)
-
-    def __getitem__(self, idx):
-        H, W = self.shapes[idx]
-        g = torch.Generator().manual_seed(self.seed * 1_000_003 + idx)
-        x = torch.rand(3, H, W, generator=g)
-        path = f"<synthetic:{self.dataset_name}:{idx:04d}>"
-        meta = {
-            "filename": f"synthetic_{idx:04d}_{H}x{W}.png",
-            "dataset": self.dataset_name,
-            "original_h": int(H),
-            "original_w": int(W),
-            "path": path,
-        }
-        return x, self.dataset_name, path, meta
 
 
 def build_datasets(cfg: DataConfig):

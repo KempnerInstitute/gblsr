@@ -94,7 +94,6 @@ class RunConfig:
     image_size: int = 256
     patch_size: int = 32
     d_feat: int = 128
-    n_encoder_layers: int = 3
     p_max: int = 16
     family: Literal["fourier", "cosine"] = "fourier"
     s_e_lo: float = 0.25
@@ -521,7 +520,7 @@ def build_model_from_run_config(rc: RunConfig) -> torch.nn.Module:
     Does not move the model to a device or apply seeding; that is the
     caller's responsibility.
     """
-    enc_cfg = EncoderConfig(d_feat=rc.d_feat, n_layers=rc.n_encoder_layers)
+    enc_cfg = EncoderConfig(d_feat=rc.d_feat)
     basis_cfg = BasisConfig(
         patch_size=rc.patch_size,
         p_max=rc.p_max,
