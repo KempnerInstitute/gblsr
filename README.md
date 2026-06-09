@@ -174,9 +174,7 @@ the paper protocol. For production, layer these on top of
   shape.
 - **Batching**: pass `(B, 3, H, W)`; per-image cost amortizes.
 - **CUDA Graphs**: capture + replay at a fixed input shape.
-- **AMP** (bf16/fp16): *not recommended for this model*; measured
-  0.79–0.95x of fp32 (autocast overhead exceeds kernel savings for a
-  ~1 M-param model). Use only inside a larger AMP pipeline.
+- **AMP** (bf16/fp16): use only inside a larger AMP pipeline.
 
 `torch.compile` alone delivers essentially all the available speedup;
 stacking with bf16 does not beat it.
