@@ -176,9 +176,6 @@ the paper protocol. For production, layer these on top of
 - **CUDA Graphs**: capture + replay at a fixed input shape.
 - **AMP** (bf16/fp16): use only inside a larger AMP pipeline.
 
-`torch.compile` alone delivers essentially all the available speedup;
-stacking with bf16 does not beat it.
-
 ## Variants
 
 The GB-LSR family is parameterized by ``bandwidth_mode`` in
