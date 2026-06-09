@@ -148,11 +148,7 @@ def _validate_inference_settings(model: torch.nn.Module) -> None:
 
 
 def _summarize(times_ms: list[float]) -> tuple[float, float, float, float, float]:
-    """Return ``(median, mean, std, p90, p95)`` from a non-empty list of timings.
-
-    Internal helper. The input list is assumed already sorted; we
-    sort defensively anyway to keep the helper hard to misuse.
-    """
+    """Return ``(median, mean, std, p90, p95)`` from a non-empty list of timings."""
 
     if not times_ms:
         raise RuntimeError("no timing samples collected")

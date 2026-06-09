@@ -133,46 +133,24 @@ def make_valid_patch_mask(
 ) -> torch.Tensor:
     """Return a boolean mask over the padded patch grid.
 
-    A patch is valid iff its (P x P) extent in padded coordinates intersects
-    the original image rectangle. ``pad_to_multiple`` uses symmetric padding
-    (``pad_t`` / ``pad_l`` on top/left, ``pad_b`` / ``pad_r`` on bottom/right),
-    so the original image lives at
-    ``[pad_t : pad_t + orig_h, pad_l : pad_l + orig_w]`` inside the padded canvas.
-
-    Validity rule (rectangle intersection):
-        orig_y0 = pad_t,           orig_y1 = pad_t + orig_h
-        orig_x0 = pad_l,           orig_x1 = pad_l + orig_w
-        patch_y0 = row * P,        patch_y1 = patch_y0 + P
-        patch_x0 = col * P,        patch_x1 = patch_x0 + P
-        valid = (patch_y1 > orig_y0) AND (patch_y0 < orig_y1)
-                AND (patch_x1 > orig_x0) AND (patch_x0 < orig_x1)
-
-    Boundary patches that contain any original-image pixels are valid.
-    Patches whose full PxP extent lies entirely inside the reflect/replicate
-    pad region are invalid.
+    A patch is valid iff its (P x P) extent intersects the original-image
+    rectangle inside the padded canvas. Boundary patches that contain any
+    original-image pixels are valid; patches fully inside the pad region
+    are invalid.
 
     Parameters
     ----------
     pad_info : dict
-        Output of :func:`pad_to_multiple` (must contain ``orig_h``,
-        ``orig_w``, ``padded_h``, ``padded_w``, ``pad_t``, ``pad_l``).
+        Output of :func:`pad_to_multiple` (uses ``orig_h``, ``orig_w``,
+        ``padded_h``, ``padded_w``, ``pad_t``, ``pad_l``).
     patch_size : int
-        Patch extent P in pixel coordinates. Must equal ``pad_info["patch_size"]``
-        when the latter is present (we re-derive the grid shape from
-        ``padded_h`` / ``padded_w`` to remain robust).
+        Patch extent P in pixel coordinates.
     batch_size : int | None
-        If None, returns a 2D mask ``(num_patches_h, num_patches_w)``.
-        Otherwise returns a 3D mask ``(batch_size, num_patches_h, num_patches_w)``
-        broadcast across the batch axis (every batch element gets the
-        same mask because we apply a single shared pad to the whole batch).
+        If None, returns ``(num_patches_h, num_patches_w)``; otherwise
+        returns ``(batch_size, num_patches_h, num_patches_w)`` broadcast
+        across the batch axis.
     device : torch.device | None
         Device for the returned tensor. Defaults to CPU.
-
-    Returns
-    -------
-    torch.Tensor
-        Boolean mask. Shape ``(num_patches_h, num_patches_w)`` if
-        ``batch_size is None``, else ``(batch_size, num_patches_h, num_patches_w)``.
     """
     if patch_size <= 0:
         raise ValueError(f"patch_size must be positive, got {patch_size}")

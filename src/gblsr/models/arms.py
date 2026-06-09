@@ -198,7 +198,7 @@ class LocalSpectralDecoder(nn.Module):
         return s_scalar.expand_as(template)
 
     def forward(self, feat_map: torch.Tensor) -> dict[str, torch.Tensor]:
-        """(B, D, nH, nW) -> dict with coeffs, s_e, p_soft, reconstruction."""
+        """(B, D, nH, nW) -> dict with ``coeffs``, ``s_e``, ``p_soft``, ``patches``, ``recon``."""
         B, D, nH, nW = feat_map.shape
         feat = feat_map.permute(0, 2, 3, 1).contiguous()
         pmax = self.basis_cfg.p_max
@@ -284,25 +284,15 @@ class LocalSpectralArm(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> dict[str, torch.Tensor]:
-        """Variable-resolution forward for the GB-LSR family.
+        """Variable-resolution forward.
 
-        Pads the input to a multiple of ``patch_size``, runs the encoder
-        + local-spectral decoder on the padded tensor, and crops the
-        reconstruction back to the input's spatial size. When ``H`` and
-        ``W`` are already multiples of ``patch_size`` the pad is zero on
-        all sides and the crop is a contiguous-slice no-op.
-
-        The auxiliary outputs ``coeffs``, ``s_e``, ``p_soft`` and
-        ``patches`` are returned at the *padded* patch-grid layout
-        because they live in patch space and there is no canonical
-        crop for them.
-
-        Returns ``valid_patch_mask`` of shape
-        ``(B, num_patches_h, num_patches_w)`` so consumers can exclude
-        fully-padded patches from per-patch statistics, locality
-        diagnostics, or coefficient visualizations. Boundary patches
-        whose ``P x P`` extent intersects the original-image rectangle
-        (i.e. contain any original-image pixels) are marked valid.
+        Pads to a multiple of ``patch_size``, runs encoder + local-spectral
+        decoder on the padded tensor, and crops ``recon`` back to the
+        input's spatial size. The auxiliary outputs (``coeffs``, ``s_e``,
+        ``p_soft``, ``patches``) stay at the padded patch-grid layout
+        since they live in patch space. ``valid_patch_mask`` of shape
+        ``(B, num_patches_h, num_patches_w)`` lets consumers exclude
+        fully-padded patches.
         """
         P = self.cfg.patch_size
         x_pad, pad_info = pad_to_multiple(x, P, mode="reflect")
@@ -311,10 +301,6 @@ class LocalSpectralArm(nn.Module):
         out = self.decoder(feat)
         out["recon"] = crop_to_original(out["recon"], pad_info)
         out["pad_info"] = pad_info
-        # Match the dominant batched layout of patch-space outputs
-        # (``coeffs``, ``patches``: leading dim B). The mask broadcasts
-        # over the batch axis because we apply a single shared pad to
-        # the whole batch.
         out["valid_patch_mask"] = make_valid_patch_mask(
             pad_info=pad_info,
             patch_size=P,

@@ -1,4 +1,4 @@
-"""Metrics: PSNR, SSIM, LPIPS, edge-aware LPIPS, local-spectrum error.
+"""Metrics: PSNR, SSIM, LPIPS, edge-LPIPS, local-spectrum error.
 
 All metrics accept ``(B, 3, H, W)`` tensors in ``[0, 1]`` and return
 per-image scalars (shape ``(B,)``) unless otherwise noted. Region-sliced
@@ -17,7 +17,6 @@ LPIPS backend is ``lpips.LPIPS(net="alex")``.
 from __future__ import annotations
 
 import importlib.util
-import time
 
 import torch
 import torch.nn as nn
@@ -292,50 +291,3 @@ def compute_metric_panel_varres(
         "edge_lpips": elp,
         "local_spectrum_error": lse,
     }
-
-
-def measure_latency_ms(
-    fn,
-    sample: torch.Tensor,
-    n_warmup: int = 5,
-    n_timed: int = 20,
-) -> float:
-    """One-shot per-image timing helper.
-
-    Times ``fn(sample)`` repeatedly and returns the median wall-clock
-    in milliseconds. Uses ``torch.cuda.Event`` (with prior synchronize)
-    when ``sample`` lives on CUDA so the measurement reflects on-device
-    completion, and ``time.perf_counter`` on CPU.
-
-    The helper is shape-agnostic: it never inspects ``sample.shape``
-    beyond passing it through. ``sample`` is expected to already be on
-    the right device and to match ``fn``'s input contract (e.g.
-    ``(1, 3, H, W)`` for arm-style models).
-    """
-    is_cuda = sample.is_cuda
-    times_ms: list[float] = []
-    for _ in range(max(0, int(n_warmup))):
-        _ = fn(sample)
-    if is_cuda:
-        torch.cuda.synchronize(sample.device)
-    if is_cuda:
-        starter = torch.cuda.Event(enable_timing=True)
-        ender = torch.cuda.Event(enable_timing=True)
-        for _ in range(int(n_timed)):
-            starter.record()
-            _ = fn(sample)
-            ender.record()
-            torch.cuda.synchronize(sample.device)
-            times_ms.append(float(starter.elapsed_time(ender)))
-    else:
-        for _ in range(int(n_timed)):
-            t0 = time.perf_counter()
-            _ = fn(sample)
-            times_ms.append((time.perf_counter() - t0) * 1000.0)
-    if not times_ms:
-        return float("nan")
-    times_ms.sort()
-    mid = len(times_ms) // 2
-    if len(times_ms) % 2 == 1:
-        return float(times_ms[mid])
-    return float(0.5 * (times_ms[mid - 1] + times_ms[mid]))

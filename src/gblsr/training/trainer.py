@@ -223,7 +223,7 @@ def _cycle(loader):
 def measure_inference_ms(
     model, sample: torch.Tensor, device, n_warmup: int = 5, n_timed: int = 20
 ) -> float:
-    """Median wall-clock (ms) for a single single-image forward pass.
+    """Median wall-clock (ms) for a single-image forward pass.
 
     sample: (1, 3, H, W) tensor already on device. Uses cuda.synchronize around
     each timed call when device is cuda. Returns the median over n_timed runs.
@@ -519,9 +519,7 @@ def build_model_from_run_config(rc: RunConfig) -> torch.nn.Module:
     """Build a model from a :class:`RunConfig`.
 
     Does not move the model to a device or apply seeding; that is the
-    caller's responsibility. Shared by ``train_one`` and the
-    ``scripts/`` CLI entry points so model construction stays in one
-    place.
+    caller's responsibility.
     """
     enc_cfg = EncoderConfig(d_feat=rc.d_feat, n_layers=rc.n_encoder_layers)
     basis_cfg = BasisConfig(
@@ -647,11 +645,8 @@ def train_one(rc: RunConfig) -> dict:
             final_curve_point[m] = agg[m]["mean"]
     train_curve.append(final_curve_point)
 
-    # Inference timing on the actual H x W of a real val sample. We
-    # use the rectangular (H, W) of the first val image so timing
-    # reflects the resolution that eval ran on. Falls back to the
-    # configured ``image_size`` when the loader yields nothing (e.g.
-    # empty dataset).
+    # Time on the first val sample so timing reflects the resolution
+    # eval ran on; fall back to ``image_size`` when the loader is empty.
     timing_h = rc.image_size if rc.image_size else rc.patch_size
     timing_w = timing_h
     sample_for_timing = torch.zeros(1, 3, timing_h, timing_w, device=device)

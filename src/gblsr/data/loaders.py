@@ -183,9 +183,8 @@ VARRES_BATCH_GT_1_MSG = (
 def _resolve_mode(cfg: "DataConfig") -> str:
     """Return ``"locked"`` or ``"varres"`` based on a DataConfig.
 
-    Mode B trigger is permissive: either ``image_size is None`` OR
-    ``resize_policy == "original"`` puts the loader into variable-res
-    mode. Otherwise we stay in the locked-256 path.
+    Selects ``"varres"`` if ``image_size is None`` or ``resize_policy ==
+    "original"``; otherwise ``"locked"``.
     """
     if cfg.image_size is None:
         return "varres"

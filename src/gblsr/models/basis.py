@@ -43,7 +43,7 @@ import torch.nn as nn
 
 @dataclass
 class BasisConfig:
-    patch_size: int  # 32 or 64
+    patch_size: int
     p_max: int = 16  # maximum modes per axis
     family: Literal["fourier", "cosine"] = "fourier"
     s_e_range: tuple[float, float] = (0.25, 2.0)

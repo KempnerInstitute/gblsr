@@ -1,9 +1,7 @@
 """Public API for GB-LSR's core architecture (encoder, decoder, basis).
 
-Re-exports the canonical model classes and configs from ``.arms``,
-``.basis``, and ``.shape_utils`` so users can write
-``from gblsr.models import LocalSpectralArm, BasisConfig, ...`` instead
-of hunting through submodule paths.
+Re-exports the canonical model classes, configs, basis primitives, and
+shape utilities from ``.arms``, ``.basis``, and ``.shape_utils``.
 """
 
 from .arms import (

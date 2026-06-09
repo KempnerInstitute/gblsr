@@ -13,11 +13,8 @@ Usage::
     # or:
     python -m gblsr.cli.eval --config ... --checkpoint ...
 
-The checkpoint can be either:
-  - a dict produced by the trainer (with a ``state_dict`` key), or
-  - a bare ``state_dict`` dict.
-
-Both formats are detected automatically.
+The checkpoint may be either a trainer-saved dict (with a ``state_dict``
+key) or a bare ``state_dict``; both are detected automatically.
 """
 
 from __future__ import annotations
