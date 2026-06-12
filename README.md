@@ -183,7 +183,7 @@ run). Canonical sources:
 - DIV2K: <https://data.vision.ee.ethz.ch/cvl/DIV2K/>
 - Kodak: <https://r0k.us/graphics/kodak/>
 - Set14 / Set5 / Urban100: <https://github.com/jbhuang0604/SelfExSR>
-- BSDS500 / B100: <https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/segbench/>
+- BSDS300 / B100: <https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/segbench/>
 
 ## Production speedup
 
