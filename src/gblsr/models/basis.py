@@ -8,8 +8,11 @@ k = 0, 1, ..., p_max - 1.
 
 Truncated local Fourier basis (primary):
     phi_0(u) = 1
-    phi_{2j-1}(u) = cos(j * pi * u * s_e)    for j = 1, ..., (p_max - 1) // 2
-    phi_{2j}(u)   = sin(j * pi * u * s_e)    for j = 1, ..., (p_max - 1) // 2
+    phi_{2j-1}(u) = cos(j * pi * u * s_e)    for j = 1, 2, ...
+    phi_{2j}(u)   = sin(j * pi * u * s_e)    for j = 1, 2, ...
+filled in (cos, sin) order until exactly p_max modes per axis exist;
+for even p_max the last mode is an unpaired cos at j = p_max / 2
+(p_max = 16: constant, cos/sin pairs j = 1..7, then cos(8 pi u s_e)),
 where s_e is a per-patch learnable bandwidth scalar (shared across u, v axes
 for simplicity). The 2D basis is the outer product phi_i(u) * phi_j(v).
 
