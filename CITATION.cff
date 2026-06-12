@@ -26,7 +26,7 @@ keywords:
   - pytorch
 preferred-citation:
   type: article
-  title: "GB-LSR: A Fast Local-Spectral Image Representation with a Single Global Bandwidth for Continuous Reconstruction and Super-Resolution"
+  title: "GB-LSR: A Fast Local Spectral Image Representation with a Single Global Bandwidth for Continuous Reconstruction and Super-Resolution"
   authors:
     - family-names: Shad
       given-names: Max

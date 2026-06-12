@@ -205,7 +205,7 @@ If you use GB-LSR in your work, please cite:
 
 ```bibtex
 @article{shad2026gblsr,
-  title   = {GB-LSR: A Fast Local-Spectral Image Representation with a
+  title   = {GB-LSR: A Fast Local Spectral Image Representation with a
              Single Global Bandwidth for Continuous Reconstruction and
              Super-Resolution},
   author  = {Shad, Max and Khoshnevis, Naeem},
