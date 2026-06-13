@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gblsr"
 version = "0.0.0"
-description = "GB-LSR: Global-Bandwidth Local Spectral Representation for continuous image reconstruction."
+description = "GB-LSR: Global-Bandwidth Local Spectral Representation for continuous image reconstruction and arbitrary-scale super-resolution."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [

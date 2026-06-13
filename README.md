@@ -26,6 +26,7 @@ gblsr/                           repo root
 ├── src/gblsr/                   Python package
 │   ├── models/                  Basis, encoder, local-spectral decoder
 │   ├── encoders/                Heavyweight image encoders (e.g. RDN)
+│   ├── asr/                     Arbitrary-scale SR extension (RDN + ASR decoder)
 │   ├── latency/                 Fixed GPU latency protocol
 │   ├── training/                Training driver + losses
 │   ├── data/                    Image loaders + region slicing
@@ -174,6 +175,45 @@ The GB-LSR family is parameterized by ``bandwidth_mode`` in
 | ``local_linear``    | Per-patch bandwidth from a linear-sigmoid head.         |
 | ``local_logspace``  | Per-patch bandwidth from a log-space sigmoid head.      |
 
+## Arbitrary-scale super-resolution (ASR) extension
+
+`gblsr.asr` reuses the local-spectral decoder behind an RDN encoder and a
+LIIF/LTE-style continuous-query interface, so one encoder feature map can be
+decoded at any output resolution. The reported family variants are all
+reachable by configuration, with no separate code path:
+
+```python
+from gblsr import GBLSRScalarASR
+
+# base (GB-LSR-Scalar-ASR; 22.02M trainable params)
+model = GBLSRScalarASR()
+
+# noLE: drop the 4-corner local ensemble (parameter-free)
+noLE = GBLSRScalarASR(decoder_cfg={"local_ensemble": False})
+
+# nf96: widen the RDN encoder to 96 channels (24.93M params)
+nf96 = GBLSRScalarASR(encoder_cfg={"num_features": 96})
+
+# render an LR image at an arbitrary output resolution
+import torch
+lr = torch.rand(1, 3, 64, 64)
+hr = model.predict_full(lr, H_q=256, W_q=256)   # (1, 3, 256, 256)
+```
+
+`encoder_cfg` keys are `RDNConfig` fields (`num_features`, `growth_rate`,
+`num_rdbs`, `num_layers_per_rdb`); `decoder_cfg` keys are
+`GBLSRScalarASRDecoder` arguments (`p_max`, `bandwidth_init`,
+`local_ensemble`). The `nf48`/`nf96` and `noLE` variants compose freely
+(e.g. `encoder_cfg={"num_features": 96}, decoder_cfg={"local_ensemble": False}`
+for `nf96+noLE`).
+
+**Scope.** This module ships the *method* (encoder + decoder + the
+continuous-query forward / `predict_full` interface). The arbitrary-scale
+training recipe (1,000,000 steps on DIV2K, LIIF-style multi-scale sampling)
+and the GPU-latency timing harness are documented in the paper appendix but
+not bundled here; the canonical-style LIIF/LTE/SwinIR comparison baselines
+are likewise out of scope for this package.
+
 ## Datasets
 
 The data loaders read external datasets from disk (paths configured per
@@ -184,6 +224,9 @@ run). Canonical sources:
 - Kodak: <https://r0k.us/graphics/kodak/>
 - Set14 / Set5 / Urban100: <https://github.com/jbhuang0604/SelfExSR>
 - BSDS300 / B100: <https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/segbench/>
+
+Kodak / Set14 / Urban100 are the native-reconstruction benchmark; Set5 /
+B100 (and Set14 / Urban100) are the arbitrary-scale SR evaluation datasets.
 
 ## Production speedup
 
