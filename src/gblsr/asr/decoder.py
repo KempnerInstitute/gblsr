@@ -49,9 +49,7 @@ import torch.nn.functional as F
 from .coord import make_coord
 
 
-def _fourier_basis_1d(
-    coord: torch.Tensor, p_max: int, s_e: torch.Tensor
-) -> torch.Tensor:
+def _fourier_basis_1d(coord: torch.Tensor, p_max: int, s_e: torch.Tensor) -> torch.Tensor:
     """Evaluate the 1D truncated Fourier basis pointwise.
 
     Ordering matches :mod:`gblsr.models.basis` (``family='fourier'``)::
@@ -109,9 +107,7 @@ class GBLSRScalarASRDecoder(nn.Module):
         # to the native decoder's Linear (which permutes channels to last
         # and applies a Linear to the per-cell feature vector).
         # Output: 3 * p_max * p_max.
-        self.coeff_proj = nn.Conv2d(
-            in_dim, 3 * p_max * p_max, kernel_size=1, bias=True
-        )
+        self.coeff_proj = nn.Conv2d(in_dim, 3 * p_max * p_max, kernel_size=1, bias=True)
         # Init: weight ~ N(0, 0.01), bias = 0.
         nn.init.normal_(self.coeff_proj.weight, std=0.01)
         nn.init.zeros_(self.coeff_proj.bias)
@@ -172,12 +168,12 @@ class GBLSRScalarASRDecoder(nn.Module):
                 coord_.clamp_(-1 + 1e-6, 1 - 1e-6)
 
                 grid = coord_.flip(-1).unsqueeze(1)  # (B, 1, Q, 2), (x, y)
-                q_coef = F.grid_sample(
-                    coef, grid, mode="nearest", align_corners=False
-                )[:, :, 0, :].permute(0, 2, 1)  # (B, Q, 3*P*P)
-                q_fcoord = F.grid_sample(
-                    feat_coord, grid, mode="nearest", align_corners=False
-                )[:, :, 0, :].permute(0, 2, 1)  # (B, Q, 2)
+                q_coef = F.grid_sample(coef, grid, mode="nearest", align_corners=False)[
+                    :, :, 0, :
+                ].permute(0, 2, 1)  # (B, Q, 3*P*P)
+                q_fcoord = F.grid_sample(feat_coord, grid, mode="nearest", align_corners=False)[
+                    :, :, 0, :
+                ].permute(0, 2, 1)  # (B, Q, 2)
 
                 rel_coord = coord - q_fcoord
                 rel_coord[:, :, 0] *= H  # ~[-1, 1] within owning cell
@@ -190,19 +186,13 @@ class GBLSRScalarASRDecoder(nn.Module):
                 q_coef_rgb = q_coef.view(*Bq, 3, P, P)  # (B, Q, 3, P, P)
 
                 # rgb[b,q,c] = sum_{i,j} coef[b,q,c,i,j] * phi_y[b,q,i] * phi_x[b,q,j]
-                pred = torch.einsum(
-                    "bqcij,bqi,bqj->bqc", q_coef_rgb, phi_y, phi_x
-                )
+                pred = torch.einsum("bqcij,bqi,bqj->bqc", q_coef_rgb, phi_y, phi_x)
                 preds.append(pred)
-                areas.append(
-                    torch.abs(rel_coord[:, :, 0] * rel_coord[:, :, 1]) + 1e-9
-                )
+                areas.append(torch.abs(rel_coord[:, :, 0] * rel_coord[:, :, 1]) + 1e-9)
 
         if self.local_ensemble:
             areas[0], areas[3] = areas[3], areas[0]
             areas[1], areas[2] = areas[2], areas[1]
 
         total = sum(areas)
-        return sum(
-            pred * (area / total).unsqueeze(-1) for pred, area in zip(preds, areas)
-        )
+        return sum(pred * (area / total).unsqueeze(-1) for pred, area in zip(preds, areas))
