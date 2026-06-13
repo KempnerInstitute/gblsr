@@ -177,42 +177,28 @@ The GB-LSR family is parameterized by ``bandwidth_mode`` in
 
 ## Arbitrary-scale super-resolution (ASR) extension
 
-`gblsr.asr` reuses the local-spectral decoder behind an RDN encoder and a
-LIIF/LTE-style continuous-query interface, so one encoder feature map can be
-decoded at any output resolution. The reported family variants are all
-reachable by configuration, with no separate code path:
+`gblsr.asr` decodes one RDN-encoder feature map at any output resolution via
+a LIIF/LTE-style continuous-query interface. All reported variants are
+config-only (no separate code path):
 
 ```python
+import torch
 from gblsr import GBLSRScalarASR
 
-# base (GB-LSR-Scalar-ASR; 22.02M trainable params)
-model = GBLSRScalarASR()
+model = GBLSRScalarASR()                                       # base, 22.02M params
+noLE  = GBLSRScalarASR(decoder_cfg={"local_ensemble": False})  # drop 4-corner ensemble
+nf96  = GBLSRScalarASR(encoder_cfg={"num_features": 96})       # wider encoder, 24.93M
 
-# noLE: drop the 4-corner local ensemble (parameter-free)
-noLE = GBLSRScalarASR(decoder_cfg={"local_ensemble": False})
-
-# nf96: widen the RDN encoder to 96 channels (24.93M params)
-nf96 = GBLSRScalarASR(encoder_cfg={"num_features": 96})
-
-# render an LR image at an arbitrary output resolution
-import torch
-lr = torch.rand(1, 3, 64, 64)
-hr = model.predict_full(lr, H_q=256, W_q=256)   # (1, 3, 256, 256)
+hr = model.predict_full(torch.rand(1, 3, 64, 64), H_q=256, W_q=256)  # (1,3,256,256)
 ```
 
-`encoder_cfg` keys are `RDNConfig` fields (`num_features`, `growth_rate`,
-`num_rdbs`, `num_layers_per_rdb`); `decoder_cfg` keys are
+`encoder_cfg` takes `RDNConfig` fields; `decoder_cfg` takes
 `GBLSRScalarASRDecoder` arguments (`p_max`, `bandwidth_init`,
-`local_ensemble`). The `nf48`/`nf96` and `noLE` variants compose freely
-(e.g. `encoder_cfg={"num_features": 96}, decoder_cfg={"local_ensemble": False}`
-for `nf96+noLE`).
+`local_ensemble`); variants compose (e.g. `nf96+noLE`).
 
-**Scope.** This module ships the *method* (encoder + decoder + the
-continuous-query forward / `predict_full` interface). The arbitrary-scale
-training recipe (1,000,000 steps on DIV2K, LIIF-style multi-scale sampling)
-and the GPU-latency timing harness are documented in the paper appendix but
-not bundled here; the canonical-style LIIF/LTE/SwinIR comparison baselines
-are likewise out of scope for this package.
+**Scope:** ships the method (encoder + decoder + `predict_full`). The training
+recipe (1M steps on DIV2K) is in the paper appendix; the timing harness and
+the LIIF/LTE/SwinIR baselines are not bundled.
 
 ## Datasets
 
