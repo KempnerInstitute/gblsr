@@ -1,5 +1,12 @@
 # GB-LSR
 
+[![CI](https://github.com/KempnerInstitute/gblsr/actions/workflows/ci.yml/badge.svg)](https://github.com/KempnerInstitute/gblsr/actions/workflows/ci.yml)
+[![arXiv](https://img.shields.io/badge/arXiv-2606.19617-b31b1b.svg)](https://arxiv.org/abs/2606.19617)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-ffcc4d.svg)](https://huggingface.co/KempnerInstituteAI/gblsr)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/KempnerInstitute/gblsr/blob/main/LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 **Global-Bandwidth Local Spectral Representation** for continuous image
 reconstruction.
 
