@@ -32,5 +32,7 @@ preferred-citation:
       given-names: Max
     - family-names: Khoshnevis
       given-names: Naeem
-  journal: "arXiv preprint arXiv:XXX"
+  journal: "arXiv preprint arXiv:2606.19617"
   year: 2026
+  doi: "10.48550/arXiv.2606.19617"
+  url: "https://arxiv.org/abs/2606.19617"

@@ -3,7 +3,7 @@
 **Global-Bandwidth Local Spectral Representation** for continuous image
 reconstruction.
 
-**Paper**: [arXiv:XXX](https://arxiv.org/abs/XXX) *(placeholder; update once the arXiv ID is assigned)*
+**Paper**: [arXiv:2606.19617](https://arxiv.org/abs/2606.19617)
 
 A fixed-grid local spectral image representation: the image domain is
 partitioned into a fixed grid of non-overlapping square patches, each
@@ -238,12 +238,10 @@ If you use GB-LSR in your work, please cite:
              Single Global Bandwidth for Continuous Reconstruction and
              Super-Resolution},
   author  = {Shad, Max and Khoshnevis, Naeem},
-  journal = {arXiv preprint arXiv:XXX},
+  journal = {arXiv preprint arXiv:2606.19617},
   year    = {2026},
 }
 ```
-
-*(Replace ``XXX`` with the actual arXiv identifier once assigned.)*
 
 ## License
 
