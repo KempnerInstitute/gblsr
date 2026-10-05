@@ -5,12 +5,13 @@ reconstruction. The image domain is partitioned into a fixed grid of
 non-overlapping square patches; each patch carries a small block of
 coefficients for a truncated Fourier basis, predicted from shared
 convolutional-encoder features by a single linear projection. A single
-trainable scalar bandwidth is shared globally across all patches, and
-reconstruction at any continuous coordinate is a fixed-size basis
-contraction whose cost is independent of image size. A separate
-arbitrary-scale super-resolution extension (:mod:`gblsr.asr`) reuses the
-same local-spectral decoder behind an RDN encoder and a continuous-query
-interface.
+trainable scalar bandwidth is shared across every patch and every image.
+As in earlier local spectral decoders, decoding at a continuous coordinate
+is a fixed-size basis contraction whose cost is set by the spectral
+cutoff; GB-LSR learns the bandwidth of that basis instead of fixing it. A
+separate arbitrary-scale super-resolution extension (:mod:`gblsr.asr`)
+adapts the local-spectral decoder to an RDN encoder and a
+continuous-query interface.
 
 Quick start
 -----------

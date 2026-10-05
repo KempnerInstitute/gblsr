@@ -2,24 +2,25 @@
 
 [![CI](https://github.com/KempnerInstitute/gblsr/actions/workflows/ci.yml/badge.svg)](https://github.com/KempnerInstitute/gblsr/actions/workflows/ci.yml)
 [![arXiv](https://img.shields.io/badge/arXiv-2606.19617-b31b1b.svg)](https://arxiv.org/abs/2606.19617)
-[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Models-ffcc4d.svg)](https://huggingface.co/KempnerInstituteAI/gblsr)
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Models-ffcc4d.svg)](https://huggingface.co/KempnerInstituteAI/gblsr)
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://github.com/KempnerInstitute/gblsr/blob/main/LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-**Global-Bandwidth Local Spectral Representation** for continuous image
+Global-Bandwidth Local Spectral Representation for continuous image
 reconstruction.
 
-**Paper**: [arXiv:2606.19617](https://arxiv.org/abs/2606.19617)
+Paper: [arXiv:2606.19617](https://arxiv.org/abs/2606.19617)
 
 A fixed-grid local spectral image representation: the image domain is
 partitioned into a fixed grid of non-overlapping square patches, each
 patch carries a small block of coefficients for a truncated Fourier
 basis predicted from shared convolutional-encoder features by a single
 linear projection, and a single trainable scalar bandwidth is shared
-globally across all patches. Reconstruction at any continuous
-coordinate is a fixed-size basis contraction whose cost is independent
-of image size.
+across every patch and every image. As in earlier local spectral
+decoders, decoding at a continuous coordinate is a fixed-size basis
+contraction whose cost is set by the spectral cutoff; GB-LSR learns the
+bandwidth of that basis instead of fixing it.
 
 ## Repository layout
 
@@ -74,7 +75,8 @@ pip install -e .          # editable install for development
 pip install -e ".[dev]"   # also installs pytest + ruff
 ```
 
-CUDA toolkit and a matching `torch` build must be installed separately.
+`uv sync` installs torch from the PyTorch CUDA 12.1 index; with pip, install a
+torch build that matches your CUDA driver.
 
 ## Command-line tools
 
@@ -109,7 +111,9 @@ uv run gblsr-decode \
     --input features.pt --output recon.png
 ```
 
-Also reachable as `python -m gblsr.cli.<name>` or `scripts/<name>.py`.
+Also reachable as `python -m gblsr.cli.<name>` or `scripts/<name>.py`; for
+`gblsr-measure-latency` these are `gblsr.cli.latency` and
+`scripts/measure_latency.py`.
 
 ## Using gblsr from Python
 
@@ -136,10 +140,9 @@ from gblsr.metrics  import psnr, ssim, lpips_metric, edge_lpips, local_spectrum_
 from gblsr.data     import DataConfig, build_datasets, label_patches
 ```
 
-Each ``__init__.py`` declares an ``__all__`` listing the canonical
-public symbols; the deep-import paths (e.g.
-``gblsr.models.arms.LocalSpectralArm``) continue to work for power
-users.
+The package and each subpackage except ``gblsr.cli`` declare an
+``__all__`` listing the public symbols; deep imports (e.g.
+``gblsr.models.arms.LocalSpectralArm``) also work.
 
 ### Quick API check
 
@@ -148,7 +151,7 @@ import torch
 from gblsr import LocalSpectralArm, ModelConfig, EncoderConfig, BasisConfig
 from gblsr.latency import measure_latency
 
-# Build a tiny model
+# GB-LSR-Scalar at patch size 32, as in the design study
 mc = ModelConfig(
     arm="local_spectral",
     image_size=256,
@@ -156,7 +159,7 @@ mc = ModelConfig(
     basis=BasisConfig(patch_size=32, p_max=16),
     encoder=EncoderConfig(d_feat=128),
 )
-model = LocalSpectralArm(mc, bandwidth_mode="global_scalar").eval()
+model = LocalSpectralArm(mc, bandwidth_mode="global_scalar", adapt_order=False).eval()
 
 # Forward pass
 x = torch.randn(1, 3, 256, 256)
@@ -172,15 +175,21 @@ print(f"median latency: {result.median_ms:.2f} ms")
 
 ## Variants
 
-The GB-LSR family is parameterized by ``bandwidth_mode`` in
-``LocalSpectralDecoder``:
+The GB-LSR family is parameterized by ``bandwidth_mode`` and
+``adapt_order`` in ``LocalSpectralDecoder``:
 
 | ``bandwidth_mode``  | Description                                              |
 |---------------------|----------------------------------------------------------|
 | ``fixed_midpoint``  | Bandwidth pinned to a single fixed value (no training). |
-| ``global_scalar``   | **Main variant**: one global trainable scalar shared across all patches. |
+| ``global_scalar``   | Main variant: one global trainable scalar shared across all patches. |
 | ``local_linear``    | Per-patch bandwidth from a linear-sigmoid head.         |
 | ``local_logspace``  | Per-patch bandwidth from a log-space sigmoid head.      |
+
+With ``adapt_order=True`` (the default), the decoder also predicts a
+per-patch cutoff order. The paper's GB-LSR-Scalar, GB-LSR-Fixed, and
+GB-LSR-Bandwidth are ``global_scalar``, ``fixed_midpoint``, and
+``local_logspace`` with ``adapt_order=False``; GB-LSR-Full is
+``local_logspace`` with ``adapt_order=True``.
 
 ## Arbitrary-scale super-resolution (ASR) extension
 
@@ -203,9 +212,18 @@ hr = model.predict_full(torch.rand(1, 3, 64, 64), H_q=256, W_q=256)  # (1,3,256,
 `GBLSRScalarASRDecoder` arguments (`p_max`, `bandwidth_init`,
 `local_ensemble`); variants compose (e.g. `nf96+noLE`).
 
-**Scope:** ships the method (encoder + decoder + `predict_full`). The training
-recipe (1M steps on DIV2K) is in the paper appendix; the timing harness and
-the LIIF/LTE/SwinIR baselines are not bundled.
+Scope: ships the method (encoder + decoder + `predict_full`). The training
+recipe (1M steps on DIV2K) is in the paper; the harness that timed the
+super-resolution comparison and the methods the paper compares with are
+not bundled.
+
+## Pretrained models
+
+Trained weights for four super-resolution models and two design-study
+models from the paper (training seed 0) are on the Hugging Face Hub at
+[KempnerInstituteAI/gblsr](https://huggingface.co/KempnerInstituteAI/gblsr),
+tag `arxiv-v2`, under CC BY-NC 4.0. The model card gives their scores
+and loading code.
 
 ## Datasets
 
@@ -218,8 +236,9 @@ run). Canonical sources:
 - Set14 / Set5 / Urban100: <https://github.com/jbhuang0604/SelfExSR>
 - BSDS300 / B100: <https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/grouping/segbench/>
 
-Kodak / Set14 / Urban100 are the native-reconstruction benchmark; Set5 /
-B100 (and Set14 / Urban100) are the arbitrary-scale SR evaluation datasets.
+Kodak / Set14 / Urban100 are the test sets of the native-reconstruction
+design study; Set5 / Set14 / B100 / Urban100 and the DIV2K validation
+split are the arbitrary-scale SR evaluation datasets.
 
 ## Production speedup
 
@@ -228,12 +247,11 @@ Defaults are deployment-conservative (batch=1, no AMP, no
 same defaults. For production, layer these on top of
 `LocalSpectralArm`:
 
-- **`torch.compile`** (`model = torch.compile(model)`): ~2.4x at
-  256x256 (1.43 ms -> 0.58 ms on NVIDIA H200 SXM 141GB). One-time
-  ~60 s compile per input shape.
-- **Batching**: pass `(B, 3, H, W)`; per-image cost amortizes.
-- **CUDA Graphs**: capture + replay at a fixed input shape.
-- **AMP** (bf16/fp16): use only inside a larger AMP pipeline.
+- `torch.compile` (`model = torch.compile(model)`): the first call
+  compiles, and a new input shape can trigger a recompile.
+- Batching: pass `(B, 3, H, W)`; per-image cost amortizes.
+- CUDA Graphs: capture + replay at a fixed input shape.
+- AMP (bf16/fp16): use only inside a larger AMP pipeline.
 
 ## Citation
 
@@ -241,9 +259,8 @@ If you use GB-LSR in your work, please cite:
 
 ```bibtex
 @article{shad2026gblsr,
-  title   = {GB-LSR: A Fast Local Spectral Image Representation with a
-             Single Global Bandwidth for Continuous Reconstruction and
-             Super-Resolution},
+  title   = {{GB-LSR}: Local Spectral Decoding with a Learned Global
+             Bandwidth for Arbitrary-Scale Super-Resolution},
   author  = {Shad, Max and Khoshnevis, Naeem},
   journal = {arXiv preprint arXiv:2606.19617},
   year    = {2026},

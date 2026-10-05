@@ -4,15 +4,15 @@ Pairs the :class:`gblsr.encoders.rdn.RDNEncoder` with the
 :class:`gblsr.asr.decoder.GBLSRScalarASRDecoder` to form the
 arbitrary-scale super-resolution model.
 
-The reported family variants are all reachable by configuration, with no
-separate code path:
+The variants reported in the paper are all reachable by configuration, with
+no separate code path:
 
-  * **base**: ``GBLSRScalarASR()``
-  * **noLE** (no 4-corner local ensemble)::
+  * base: ``GBLSRScalarASR()``
+  * noLE (no 4-corner local ensemble)::
 
         GBLSRScalarASR(decoder_cfg={"local_ensemble": False})
 
-  * **nf48 / nf96** (narrower / wider RDN encoder)::
+  * nf32 / nf48 / nf96 (narrower or wider RDN encoder)::
 
         GBLSRScalarASR(encoder_cfg={"num_features": 96})
 

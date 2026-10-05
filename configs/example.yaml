@@ -72,6 +72,7 @@ arms:
   - arm: local_spectral
     slug: gb_lsr_scalar
     bandwidth_mode: global_scalar
+    adapt_order: false
 
   # To add more variants, append more stanzas. Examples (commented):
   #
@@ -82,6 +83,7 @@ arms:
   # - arm: local_spectral
   #   slug: gb_lsr_fixed
   #   bandwidth_mode: fixed_midpoint
+  #   adapt_order: false
   #
   # - arm: global_fourier_mlp
   #   slug: gfm_baseline

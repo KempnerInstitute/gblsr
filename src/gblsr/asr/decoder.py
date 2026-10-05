@@ -12,12 +12,12 @@ within the cell (LIIF convention, scaled to approximately ``[-1, 1]``),
 evaluates the 2D truncated Fourier basis at that point with a single
 global trainable bandwidth ``s_e``, and contracts the basis against the
 cell's coefficients. A 4-corner local ensemble is applied for
-LIIF / LTE-compatible behaviour (essentially free in parameters).
+LIIF / LTE-compatible behavior (parameter-free).
 
 Design notes:
-  * Single global trainable scalar bandwidth, parameterised as
+  * Single global trainable scalar bandwidth, parameterized as
     ``s_e = softplus(log_s_e)`` for strict positivity; ``log_s_e`` is
-    initialised at ``softplus_inv(bandwidth_init)`` so that ``s_e`` equals
+    initialized at ``softplus_inv(bandwidth_init)`` so that ``s_e`` equals
     ``bandwidth_init`` exactly at step 0 (default 1.0). Note that the naive
     ``log_s_e = log(1.0) = 0`` would instead give
     ``softplus(0) = ln 2 = 0.693``; the exact softplus inverse is used so
@@ -30,7 +30,7 @@ Design notes:
   * ``cell`` is accepted in the forward signature (unified with LIIF and
     LTE) but not used inside the decoder: scale adaptation happens via the
     density of the high-resolution query grid, so the native-reconstruction
-    decoder's cell-free behaviour is preserved while respecting the shared
+    decoder's cell-free behavior is preserved while respecting the shared
     API.
   * The basis-element footprint is the high-resolution region owned by one
     low-resolution feature cell at the evaluation scale
@@ -57,7 +57,7 @@ def _fourier_basis_1d(coord: torch.Tensor, p_max: int, s_e: torch.Tensor) -> tor
         [1, cos(pi*c*s), sin(pi*c*s), cos(2*pi*c*s), sin(2*pi*c*s),
          ..., up to ``p_max`` terms]
 
-    coord:  (...,) arbitrary shape in the normalised local coordinate.
+    coord:  (...,) arbitrary shape in the normalized local coordinate.
     s_e:    scalar-compatible bandwidth; broadcasts with ``coord``.
     returns: (..., p_max) basis values.
     """

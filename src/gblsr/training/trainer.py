@@ -1,7 +1,7 @@
 """GB-LSR training driver.
 
 Launch example:
-    python -m gblsr.training.trainer --config configs/example.yaml
+    python -m gblsr.cli.train --config configs/example.yaml
 
 Produces under ``<run_dir>``:
     experiment.json       aggregated per-run metadata + metrics
