@@ -95,7 +95,7 @@ def test_pointwise_loss_dispatches(loss_name: str, expected_at_zero: float) -> N
 
 
 def test_pointwise_loss_rejects_unknown_name() -> None:
-    """An unrecognised ``loss_name`` raises ``ValueError``."""
+    """An unrecognized ``loss_name`` raises ``ValueError``."""
     x = torch.randn(1, 3, 4, 4)
     with pytest.raises(ValueError, match="unknown loss_name"):
         pointwise_loss(x, x, loss_name="bogus_loss", charbonnier_eps=1e-3)

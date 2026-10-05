@@ -31,6 +31,7 @@ def test_example_config_parses_and_expands() -> None:
     assert rc.experiment_id == "gblsr_example"
     assert rc.arm == "local_spectral"
     assert rc.bandwidth_mode == "global_scalar"
+    assert rc.adapt_order is False
     assert rc.seed == 0
     # The run dir should incorporate the slug + seed.
     assert "gb_lsr_scalar__seed0" in rc.run_dir

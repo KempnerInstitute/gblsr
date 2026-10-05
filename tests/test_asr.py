@@ -1,14 +1,15 @@
 """Tests for the arbitrary-scale SR extension (``gblsr.asr``).
 
 Verifies:
-  - The base and nf96 models reproduce the paper's trainable-parameter
-    counts (GB-LSR-Scalar-ASR 22.024M; nf96 24.927M), with the total
-    decomposing exactly into encoder + decoder coefficient head.
+  - The base and nf96 models match the paper's trainable-parameter
+    counts (22.02M and 24.93M; checked at three decimals, 22.024M and
+    24.927M), with the total decomposing exactly into encoder + decoder
+    coefficient head.
   - Forward (continuous-query) and ``predict_full`` (full-image) shapes.
   - ``predict_full`` tiling produces the same result as the untiled path.
   - The reported family variants (noLE, nf96) build and run by config,
     and the local ensemble is parameter-free.
-  - The scalar bandwidth initialises at exactly 1.0.
+  - The scalar bandwidth initializes at exactly 1.0.
 """
 
 import pytest
@@ -38,8 +39,8 @@ def _tiny() -> GBLSRScalarASR:
 @pytest.mark.parametrize(
     "num_features,paper_millions",
     [
-        # Paper trainable-parameter counts (pareto table, 3-decimal M):
-        # GB-LSR-Scalar-ASR (base) = 22.024M; nf96 variant = 24.927M.
+        # Paper parameter counts: 22.02M (base) and 24.93M (nf96);
+        # checked here at three decimals.
         (64, 22.024),
         (96, 24.927),
     ],
@@ -50,7 +51,7 @@ def test_asr_param_count_matches_paper(num_features: int, paper_millions: float)
     total = _trainable(model)
     assert round(total / 1e6, 3) == paper_millions
 
-    # Structural decomposition (derived, not memorised): the only trainable
+    # Structural decomposition (derived, not memorized): the only trainable
     # parts are the RDN encoder and the decoder's coefficient head, which is
     # a Conv2d(num_features -> 3*p_max^2, 1x1, bias) plus the scalar log_s_e.
     enc = _trainable(model.encoder)
@@ -109,7 +110,7 @@ def test_asr_noLE_variant_builds_and_is_param_free() -> None:
 
 
 def test_asr_bandwidth_init_is_one() -> None:
-    """The scalar bandwidth initialises at exactly 1.0 (softplus_inv init)."""
+    """The scalar bandwidth initializes at exactly 1.0 (softplus_inv init)."""
     dec = GBLSRScalarASRDecoder(in_dim=16)
     assert float(dec.bandwidth()) == pytest.approx(1.0, abs=1e-5)
 

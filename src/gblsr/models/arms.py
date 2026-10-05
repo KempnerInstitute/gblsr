@@ -6,7 +6,8 @@ This module defines the building blocks of the GB-LSR family:
     to the patch-grid resolution.
   - ``LocalSpectralDecoder``: the per-patch truncated-Fourier decoder
     with four bandwidth modes (``fixed_midpoint``, ``global_scalar``
-    (the main variant), ``local_linear``, ``local_logspace``).
+    (the main variant, with ``adapt_order=False``), ``local_linear``,
+    ``local_logspace``).
   - ``GlobalFourierMLPDecoder`` / ``BaselineArm``: a Global Fourier-MLP
     that pools encoder features to a global code and renders each pixel
     via a coordinate-MLP. Provided as a no-local-basis control variant.
